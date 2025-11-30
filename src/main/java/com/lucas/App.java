@@ -7,14 +7,13 @@ public class App
 {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
-
-
         // Cria a cache antes de criar o arquivo 
-        FileManager fp = new FileManager("teste.bin", 4);
-        
-        fp.writeBinFile();
-        fp.readBinFile();
+        FileManager fp = new FileManager();
+        Cache dL1 = new Cache();
+        // Cache iL1 = new Cache();
+
+        fp.runSimulation(dL1);
+        // fp.runSimulation(iL1);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.lucas;
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 /*
 ok, basicamente então, a cache recebe seus parâmetros de configuração no construtor (nsets, bsize e assoc). 
@@ -35,6 +36,7 @@ public class Cache {
     // private int bitsTag;    // tag é oq sobra, não necessariamente precisa da variável
 
     // Atributos de dados
+    private String name;
     private int accesses;
     private int hits;
     private int totalMisses;
@@ -53,6 +55,8 @@ public class Cache {
     
     // Construtor padrão (configuração default)
     public Cache() {
+        this.name = "L1";
+
         // Mapeamento direto, bsize = 4, 1024 conjuntos
         this.nsets = 1024;
         this.assoc = 1;
@@ -93,7 +97,9 @@ public class Cache {
     }
 
     // Construtor configurável
-    public Cache(int nsets, int assoc, int bsize) {
+    public Cache(String name, int nsets, int assoc, int bsize) {
+        this.name = name;
+        
         // Mapeamento direto, bsize = 4, 1024 conjuntos
         this.nsets = nsets;
         this.assoc = assoc;
@@ -156,7 +162,6 @@ public class Cache {
     }
 
     // Métodos
-
     /* SEARCH
     Recebe o endereço, trata os dados binário (separa em offset, index, etc)
     Vê se tá na cache, se tá, retorna o "dado", se não tá, insere.
@@ -212,63 +217,127 @@ public class Cache {
                     conflictMiss++;
                     return -1;      // arrumar/modificar o valor sentinela depois
                 }
-            }
-        // Na mapeada diretamente não temos capacity miss, todos entram na classe de conflict misses (pelo q eu entendi)
+            } // Na mapeada diretamente não temos capacity miss, todos entram na classe de conflict misses (pelo q eu entendi)
 
         // Se ela for totalmente associativa ou parcialmente associativa, acho que é a mesma lógica
         } else {
-            //Aqui a gente vai no conjunto apontado por index
-            // dentro do conjunto a gente confere todos os n blocos
-                // se todos tiverem bit de válidade ok e não bater nenhuma tag: capacity miss, usa política de substituição    
-                // se achar um bit de validade 0 (vazio) e não tiver batido uma tag antes: compulsory miss
-                // se achar um bit de valid
-
-        }
-
-
-
-        for (int i = 0; i < assoc; i++) {
-            if (!cache[index][i].flag) {    //se o bit de validade é 0
-                compulsoryMiss++;
-                return -1; //dado não encontrado
+            // O que eu quero? 1. Achar o número
+            // 1a coisa. O bloco com o dado q eu quero tá lá? Isso é tudo que eu quero saber aqui
             
-            // Se o que tá ali é um dado válido
-            } else {
-                // Compara a tag pra ver se é o dado que a gente busca
-                if(cache[index][i].tag == tag) {
-                    // se é o que a gente busca, manda bala e retorna o número
-                    // vou ter que fazer a lógica pra montar o inteiro
-                
-
-                // ESSE ELSE TÁ ERRADO
-                // Caso a tag seja diferente
-
-                // preciso comparar todas as tags, e 
+            for (int i = 0; i < assoc; i++) {   //olha todos os blocos
+                if(cache[index][i].flag) { //se o bloco for válido
+                    // Compara pra ver se a tag bate
+                    if(cache[index][i].tag == tag) {
+                        hits++;
+                        // Se bateu, monta o inteiro e retorna
+                        ByteBuffer bb = ByteBuffer.wrap(cache[index][i].data);
+                        return bb.getInt(offset);
+                    }
                 } else {
-                    conflictMiss++;
-                    return -1; //dado não encontrado
+                    compulsoryMiss++;
+                    return -1;  //se encontrou um bloco vazio, logicamente todos depois dele tão vazio, já da um break e retorna -1
                 }
             }
+            // Se percorreu todos blocos do conjunto e a tag não bateu, então não temos esse dado lá
+            conflictMiss++;
+            return -1;
         }
-
-        //Se saiu do for e não achou o dado;
-        // capacityMiss;
-        
-        
-
-        return 0;
     }
 
-    // colocar byte[] data nos parâmetros
-    public void insert(byte[] block) {
+    /* INSERT
+    
+    */
+    public void insert(int address, byte[] block) {
+        // Mesmo código do search, separando o endereço
+        int offset, 
+            index, 
+            tag;
 
+        // ATENÇÃO : Num caso de borda onde bitsOffset = 0 esse código pode dar problema
+        // Separando os bits do offset
+        offset = address << (32 - bitsOffset);          //move todos os bits de offset pro extremo esquerdo, "apagando os outros"
+        offset = offset >>> (32 - bitsOffset);          //move com o unsigned shift os bits do offset pra direita de novo.
+
+        // Separando os bits do index (que são os n bitsIndex após os bits do offset);
+        index = address >>> (bitsOffset);               // descarta os bits do offset (bits a direita do index)
+        index = index << (32 - bitsIndex);              // descarta os outros bits (à esquerda, o tag)
+        index = index >>> (32 - bitsIndex);             // retorna os bits do index pra direita
+
+        // Separando os bits do tag
+        tag = address >>> (bitsOffset + bitsIndex);     // descarta os bits do offset e index
+
+        // Se for mapeada diretamente, cada conjunto é 1 bloco só.
+        if (assoc == 1) {
+            // vai lá e substitui oq ser que esteja lá
+            cache[index][0].flag = true;
+            cache[index][0].tag = tag;
+            cache[index][0].data = block;
+            return;
+        
+        // Se tiver associatividade
+        } else {
+            // Procura o primeiro bloco livre naquele conjunto
+            for (int i = 0; i < assoc; i++) {
+                if(!cache[index][i].flag) { //bloco livre
+                    // Carrega o bloco pra lá
+                    cache[index][i].flag = true;
+                    cache[index][i].tag = tag;
+                    cache[index][i].data = block;
+                    return;
+                }
+            }
+            // SE não tiver nenhum, escolhe 1 aleatoriamente e substitui
+            Random rand = new Random();
+            int target = rand.nextInt(assoc); // escolhe um número aleatório entre 0 e assoc (que é = número de blocos)
+
+            //Carrega o bloco pra lá
+            cache[index][target].flag = true;
+            cache[index][target].tag = tag;
+            cache[index][target].data = block;
+            return;
+        }
     }
 
     public void printLog() {
+        totalMisses = compulsoryMiss + conflictMiss + capacityMiss;
+        System.out.println("==================== RELATÓRIO CACHE " + this.name + " ====================");
+        System.out.println("Configuração da cache:");
+        System.out.println("===============================================");
         
+        System.out.println("Tamanho da cache: " + cacheSize + " bytes");
+
+        if (assoc == 1) {
+            System.out.println("Mapeamento direto");
+        } else {
+            if(nsets == 1) {
+                System.out.println("Totalmente associativa");
+            } else {
+                System.out.println("Associativa por conjunto " + assoc + "-way");
+            }
+        }
+        System.out.println("Conjuntos:\t" + this.nsets);
+        System.out.println("Tamanho do bloco:\t" + this.bsize);
+        System.out.println("Words de 4 bytes (inteiros)");
+        System.out.println("Endereço de 32 bits");
+        System.out.println("===============================================");
+        System.out.println("Acessos:\t" + this.accesses);
+        System.out.println("Misses totais:\t" + this.totalMisses);
+        System.out.println("Hits totais:\t" + this.hits);;
+        System.out.println("===============================================");
+        System.out.println("Misses compulsórios:\t" + this.compulsoryMiss);
+        System.out.println("Misses de conflito:\t" + this.conflictMiss);
+        System.out.println("Misses de capacidade:\t" + this.capacityMiss);
+        System.out.println("===============================================");
+        
+        double hit_ratio, miss_ratio;
+        hit_ratio = (double) hits / accesses;
+        miss_ratio = (double) totalMisses / accesses;
+
+        System.out.println("Taxa de Hit:\t" + hit_ratio);
+        System.out.println("Taxa de Miss:\t" + miss_ratio);
     }
 
-
+    //Getters e setters
     public int getBsize() {
         return bsize;
     }
