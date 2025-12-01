@@ -9,7 +9,7 @@ public class App
     {
         // Cria a cache antes de criar o arquivo 
         FileManager fp = new FileManager();
-        Cache dL1 = new Cache();
+        Cache dL1 = new Cache("dL1", 1024, 4, 16);
         // Cache iL1 = new Cache();
 
         fp.runSimulation(dL1);

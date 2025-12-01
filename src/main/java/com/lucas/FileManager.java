@@ -18,7 +18,7 @@ public class FileManager {
         FILE_NAME = "data.bin";
         this.bsize = 4;
         this.minData = bsize/4;
-        this.n = 1000;          //altera quantos blocos de memória vão ser criados (no data.bin)
+        this.n = 10000;          //altera quantos blocos de memória vão ser criados (no data.bin)
     }
 
     // //Construtor
@@ -52,9 +52,9 @@ public class FileManager {
                     
                     // Cache retorna -1 em caso de miss
                     if (x != -1) {
-                        System.out.println("Hit! '" + x + "' encontrado!");
+                        // System.out.println("Hit! '" + x + "' encontrado!");
                     } else {
-                        System.out.println("Miss! Inserindo bloco na cache...");
+                        // System.out.println("Miss! Inserindo bloco na cache...");
                         
                         // Acessamos o arquivo de dados no modo aleatório pra poder acessar qualquer parte
                         try (RandomAccessFile raf = new RandomAccessFile(FILE_NAME, "r")) {
@@ -146,7 +146,8 @@ public class FileManager {
         int totalWords = this.n * (bsize / 4);
         
         // Garante um número mínimo ou grande de acessos
-        int numAddresses = Math.max(10, totalWords * 2); //Math.max escolhe o maior entre eles
+        // int numAddresses = Math.max(10, totalWords * 2); //Math.max escolhe o maior entre eles
+        int numAddresses = Math.max(10, totalWords);
 
         try (DataOutputStream fp = new DataOutputStream(new FileOutputStream("address.bin"))) {
             for (int i = 0; i < numAddresses; i++) {

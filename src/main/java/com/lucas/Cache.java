@@ -300,11 +300,15 @@ public class Cache {
 
     public void printLog() {
         totalMisses = compulsoryMiss + conflictMiss + capacityMiss;
-        System.out.println("==================== RELATÓRIO CACHE " + this.name + " ====================");
-        System.out.println("Configuração da cache:");
-        System.out.println("===============================================");
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println("============= RELATÓRIO CACHE " + this.name + " =============");
+        System.out.println();
+        System.out.println("------------ Configuração da cache ------------");
         
-        System.out.println("Tamanho da cache: " + cacheSize + " bytes");
+        System.out.println("Words de 4 bytes (inteiros)");
+        System.out.println("Endereço de 32 bits");
 
         if (assoc == 1) {
             System.out.println("Mapeamento direto");
@@ -315,14 +319,17 @@ public class Cache {
                 System.out.println("Associativa por conjunto " + assoc + "-way");
             }
         }
-        System.out.println("Conjuntos:\t" + this.nsets);
+
+        System.out.println();
+        System.out.println("Tamanho da cache: \t" + cacheSize + " bytes");
+        System.out.println("Conjuntos:\t\t" + this.nsets);
         System.out.println("Tamanho do bloco:\t" + this.bsize);
-        System.out.println("Words de 4 bytes (inteiros)");
-        System.out.println("Endereço de 32 bits");
+        
+        System.out.println();
         System.out.println("===============================================");
-        System.out.println("Acessos:\t" + this.accesses);
-        System.out.println("Misses totais:\t" + this.totalMisses);
-        System.out.println("Hits totais:\t" + this.hits);;
+        System.out.println("Acessos:\t\t" + this.accesses);
+        System.out.println("Misses totais:\t\t" + this.totalMisses);
+        System.out.println("Hits totais:\t\t" + this.hits);;
         System.out.println("===============================================");
         System.out.println("Misses compulsórios:\t" + this.compulsoryMiss);
         System.out.println("Misses de conflito:\t" + this.conflictMiss);
@@ -335,6 +342,7 @@ public class Cache {
 
         System.out.println("Taxa de Hit:\t" + hit_ratio);
         System.out.println("Taxa de Miss:\t" + miss_ratio);
+        System.out.println("===============================================");
     }
 
     //Getters e setters
