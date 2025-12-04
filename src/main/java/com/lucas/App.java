@@ -11,9 +11,9 @@ public class App
     {   
         // Padrão de entrada do usuário:
         // cache_simulator <nsets_L1>: <bsize_L1>: <assoc_L1> arquivo_de_entrada
-        // cache_simulator <nsets_iL1>: <bsize_iL1>: <assoc_iL1> <nsets_dL1>:<bsize_dL1>:<assoc_dL1> arquivo_de_entrada
+        // cache_simulator <nsets_dL1>: <bsize_dL1>: <assoc_dL1> <nsets_iL1>:<bsize_iL1>:<assoc_dL1> arquivo_de_entrada
         // L1 1024:4:16 "address.bin"
-        // iL1 1024:4:16 dL1 1024:4:16 "address.bin"
+        // dL1 1024:4:16 iL1 1024:4:16 "address.bin"
 
         // Ok, então se eu só inserir 1 é uma cache pra dados e instrução, se eu inserir duas, é splitted entre dados e instrução
         // A moral é que eu vou ter que pegar essa string de entrada e dividir...

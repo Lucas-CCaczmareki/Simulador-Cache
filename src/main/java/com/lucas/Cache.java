@@ -122,10 +122,10 @@ public class Cache {
             throw new IllegalArgumentException("Erro: bsize (" + bsize + ") DEVE ser uma potência de 2!");
         }
         if ((nsets & (nsets - 1)) != 0) {
-            throw new IllegalArgumentException("Erro: nsets (" + ") DEVE ser uma potência de 2!");
+            throw new IllegalArgumentException("Erro: nsets (" + nsets + ") DEVE ser uma potência de 2!");
         }
         if ((assoc & (assoc - 1)) != 0) {
-            throw new IllegalArgumentException("Erro: assoc (" + ") DEVE ser uma potência de 2!");
+            throw new IllegalArgumentException("Erro: assoc (" + assoc + ") DEVE ser uma potência de 2!");
         }
 
         // Bits offset  = log2(bsize)
@@ -168,27 +168,41 @@ public class Cache {
     
     */
     public int search(int address) {
-        int offset, 
-            index, 
-            tag;
-
         accesses++;
 
-        // Num caso de borda onde bitsOffset = 0 esse código pode dar problema
-        // Separando os bits do offset
-        offset = address << (32 - bitsOffset);  //move todos os bits de offset pro extremo esquerdo, "apagando os outros"
+        //cria uma máscara de n(bitsOffset) bits se o offset for != 0
+        int offsetMask = (bitsOffset == 0) ? 0 : ((1 << bitsOffset) - 1); 
+        int offset = (bitsOffset == 0) ? 0 : (address & offsetMask);    //se o offset for != 0, aplica a mask e retira os bits
+
+        // index (próximos bitsIndex bits)
+        int index;
+        if (bitsIndex == 0) {
+            index = 0;
+        } else {
+            int indexMask = (1 << bitsIndex) - 1;           //cria a máscara de n(bitsIndex) bits
+            index = (address >>> bitsOffset) & indexMask;   //descarta bits offset e aplica a máscara
+        }
+
+        // tag (restante dos bits à esquerda)
+        int tag = address >>> (bitsOffset + bitsIndex);
+
+        /* Lógica antiga (falhava em casos de borda (totalmente associativa))
+        // // Num caso de borda onde bitsOffset = 0 esse código pode dar problema
+        // // Separando os bits do offset
+        // offset = address << (32 - bitsOffset);  //move todos os bits de offset pro extremo esquerdo, "apagando os outros"
         
-        // O >>> (unsigned shift) preenche com 0 sempre
-        offset = offset >>> (32 - bitsOffset);  //move com o unsigned shift os bits do offset pra direita de novo.
+        // // O >>> (unsigned shift) preenche com 0 sempre
+        // offset = offset >>> (32 - bitsOffset);  //move com o unsigned shift os bits do offset pra direita de novo.
 
-        // Separando os bits do index (que são os n bitsIndex após os bits do offset);
-        index = address >>> (bitsOffset);       // descarta os bits do offset (bits a direita do index)
-        index = index << (32 - bitsIndex);      // descarta os outros bits (à esquerda, o tag)
-        index = index >>> (32 - bitsIndex);     // retorna os bits do index pra direita
+        // // Separando os bits do index (que são os n bitsIndex após os bits do offset);
+        // index = address >>> (bitsOffset);       // descarta os bits do offset (bits a direita do index)
+        // index = index << (32 - bitsIndex);      // descarta os outros bits (à esquerda, o tag)
+        // index = index >>> (32 - bitsIndex);     // retorna os bits do index pra direita
 
-        // Separando os bits do tag
-        // Como o tag é todo o resto que sobrou, só precisamos descartar os bits do offset e index
-        tag = address >>> (bitsOffset + bitsIndex);     // descarta os bits do offset e index
+        // // Separando os bits do tag
+        // // Como o tag é todo o resto que sobrou, só precisamos descartar os bits do offset e index
+        // tag = address >>> (bitsOffset + bitsIndex);     // descarta os bits do offset e index
+        */
 
         // RELEMBRANDO
             // O index me diz em qual conjunto da cache eu devo ir
@@ -248,23 +262,19 @@ public class Cache {
     
     */
     public void insert(int address, byte[] block) {
-        // Mesmo código do search, separando o endereço
-        int offset, 
-            index, 
-            tag;
+        // int offsetMask = (bitsOffset == 0) ? 0 : ((1 << bitsOffset) - 1); //cria a máscara pra ficar só com os bits do offset
+        // int offset = (bitsOffset == 0) ? 0 : (address & offsetMask);      //se o offset for válido, aplica a máscara.
 
-        // ATENÇÃO : Num caso de borda onde bitsOffset = 0 esse código pode dar problema
-        // Separando os bits do offset
-        offset = address << (32 - bitsOffset);          //move todos os bits de offset pro extremo esquerdo, "apagando os outros"
-        offset = offset >>> (32 - bitsOffset);          //move com o unsigned shift os bits do offset pra direita de novo.
+        // index (próximos bitsIndex bits)
+        int index;
+        if (bitsIndex == 0) {
+            index = 0;
+        } else {
+            int indexMask = (1 << bitsIndex) - 1;         //cria uma mascara com n (bitsIndex) bits
+            index = (address >>> bitsOffset) & indexMask; //descarta os bits do offset e aplica a máscara.
+        }
 
-        // Separando os bits do index (que são os n bitsIndex após os bits do offset);
-        index = address >>> (bitsOffset);               // descarta os bits do offset (bits a direita do index)
-        index = index << (32 - bitsIndex);              // descarta os outros bits (à esquerda, o tag)
-        index = index >>> (32 - bitsIndex);             // retorna os bits do index pra direita
-
-        // Separando os bits do tag
-        tag = address >>> (bitsOffset + bitsIndex);     // descarta os bits do offset e index
+        int tag = address >>> (bitsOffset + bitsIndex);   //descarta os bits do offset e do index
 
         // Se for mapeada diretamente, cada conjunto é 1 bloco só.
         if (assoc == 1) {

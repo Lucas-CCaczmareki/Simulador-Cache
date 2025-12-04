@@ -13,9 +13,7 @@ public class FileManager {
     private boolean isSplitted;
 
     private int dataCache_bsize;
-    private int dataCache_minData;
     private int instrCache_bsize;
-    private int instrCache_minData;
 
     private int n;          //número de blocos q vai gerar e endereços
 
@@ -26,26 +24,21 @@ public class FileManager {
         this.isSplitted = false;
 
         this.dataCache_bsize = 4;
-        this.dataCache_minData = dataCache_bsize/4;
         this.instrCache_bsize = 4;
-        this.instrCache_minData = instrCache_bsize/4;
 
         this.n = 10000;          //altera quantos blocos de memória vão ser criados (no data.bin)
     }
 
     // //Construtor
     public FileManager(String addressFile, boolean isSplitted) {
-        // this.addressFile = addressFile; // essa é a versao correta
-
-        this.addressFile = null; // será criado automaticamente se for null
+        this.addressFile = addressFile;
+        // this.addressFile = null; // será criado automaticamente se for null
 
         this.isSplitted = isSplitted;
         dataFile = "data.bin";
 
         this.dataCache_bsize = 4;
-        this.dataCache_minData = dataCache_bsize/4;
         this.instrCache_bsize = 4;
-        this.instrCache_minData = instrCache_bsize/4;
 
         this.n = 10000;          //altera quantos blocos de memória vão ser criados (no data.bin)
     }
@@ -54,10 +47,7 @@ public class FileManager {
         
         if (isSplitted) {
             this.dataCache_bsize = dataCache.getBsize();
-            this.dataCache_minData = dataCache_bsize / 4;
-
             this.instrCache_bsize = instrCache.getBsize();
-            this.instrCache_minData = instrCache_bsize / 4;
 
             writeDataFile(); //a partir daqui eu tenho data.bin e o address.bin (se não foi identificado antes)
             
@@ -148,7 +138,6 @@ public class FileManager {
         // Caso seja um cache normal
         } else {
             this.dataCache_bsize = dataCache.getBsize();
-            this.dataCache_minData = dataCache_bsize / 4;
 
             // E aqui eu gerencio
             writeDataFile(); //a partir daqui eu tenho data.bin e address.bin
@@ -160,7 +149,8 @@ public class FileManager {
                 // Lê todos os endereços no arquivo e faz as buscas na cache
                 while (true) {
                     try {
-                        byte type = fp.readByte(); //só pra avançar o ponteiro
+                        // byte type = 
+                        fp.readByte(); //só pra avançar o ponteiro
                         int address = fp.readInt();
 
                         // A cache unificada deve tratar dados e instruções (se eu n to louco)
@@ -172,7 +162,7 @@ public class FileManager {
 
                         // Cache retorna -1 em caso de miss
                         if (data != -1) {
-                            // System.out.println("Hit! '" + x + "' encontrado!");
+                            System.out.println("Hit! '" + data + "' encontrado!");
                         } else {
                             // System.out.println("Miss! Inserindo bloco na cache...");
                             
@@ -193,7 +183,7 @@ public class FileManager {
                             } catch (FileNotFoundException e) {
                                 System.err.println("X -> Arquivo de dados não encontrado: " + e.getMessage());
                             } catch (IOException e) {
-                                System.err.println("X -> Erro de I/O ao abrir address.bin: " + e.getMessage());
+                                System.err.println("X -> Erro de I/O ao abrir data.bin: " + e.getMessage());
                             }
                         }
     
@@ -225,6 +215,32 @@ public class FileManager {
     private File writeDataFile() {
         System.out.println("Escrevendo arquivo de dados binário...");
 
+        // Primeiro: descobrir o maior endereço no address.bin
+        int maxAddress = 0;
+
+        if(addressFile == null) {
+            writeAddressFile();
+        }
+
+        try (DataInputStream fp = new DataInputStream(new FileInputStream(addressFile))) {
+            while (true) {
+                try {
+                    // byte type = 
+                    fp.readByte(); // ignorado
+                    int address = fp.readInt();
+                    if (address > maxAddress) maxAddress = address;
+                } catch (EOFException e) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("X -> Erro ao ler address.bin para descobrir tamanho da memória: " + e.getMessage());
+        }
+
+        // calcula quantos blocos são necessários no data.bin
+        int maxBlockNumber = maxAddress / dataCache_bsize;
+        int totalWords = (maxBlockNumber + 1) * (dataCache_bsize / 4);
+
         // Procura o endereço do arquivo 
         File file = new File(dataFile);
 
@@ -237,13 +253,8 @@ public class FileManager {
             // Devido ao FileOutputStream, se o arquivo não existir, ele é criado
             // (lembrando que dessa maneira ele é zerado toda vez que iniciamos o programa)
         try (DataOutputStream fp = new DataOutputStream(new FileOutputStream(file))) {
-            // Random rand = new Random(); //cria um gerador de números aleatórios
 
-
-            //Eu poderia separar o arquivo de instruções pra deixar isso aqui mais certinho (e usar o instrCache_minData)
-            // mas como essa parte nem vai ser avaliada, vou deixar assim.
-
-            for(int i = 0; i < (this.n * dataCache_minData); i++) {
+            for(int i = 0; i < totalWords; i++) {
                 fp.writeInt(i); //escreve n blocos de inteiros sequenciais no arquivo (posso deixar aleatório dps)
             }
             System.out.println("Arquivo de teste criado com sucesso!");
@@ -253,9 +264,6 @@ public class FileManager {
             System.err.println("X - Falha ao escrever no arquivo! " + e.getMessage());
         }
 
-        if(addressFile == null) {
-            writeAddressFile();
-        }
         return file;
         
     }
