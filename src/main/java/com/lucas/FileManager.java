@@ -8,87 +8,203 @@ public class FileManager {
     // static faz com que essa variável seja comum a todas instâncias (ou seja, 1 só)
     // file name é simbólico. Isso na real é o nome do endereço do arquivo no meu pc num objeto java
         // Talvez seja necessário incluir os diretórios.
-    private static String FILE_NAME;
-    private int bsize;
-    private int minData;
+    private static String dataFile;
+    private String addressFile;
+    private boolean isSplitted;
+
+    private int dataCache_bsize;
+    private int dataCache_minData;
+    private int instrCache_bsize;
+    private int instrCache_minData;
+
     private int n;          //número de blocos q vai gerar e endereços
 
     //Construtor padrão
     public FileManager() {
-        FILE_NAME = "data.bin";
-        this.bsize = 4;
-        this.minData = bsize/4;
+        dataFile = "data.bin";
+        addressFile = null;
+        this.isSplitted = false;
+
+        this.dataCache_bsize = 4;
+        this.dataCache_minData = dataCache_bsize/4;
+        this.instrCache_bsize = 4;
+        this.instrCache_minData = instrCache_bsize/4;
+
         this.n = 10000;          //altera quantos blocos de memória vão ser criados (no data.bin)
     }
 
     // //Construtor
-    // public FileManager(String name, int bsize) {
-    //     FILE_NAME = name;
-    //     this.bsize = bsize;
-    //     this.minData = bsize/4; // Como bsize é em bytes, ao dividir por 4 temos quantos inteiros cabem num bloco
-    // }
+    public FileManager(String addressFile, boolean isSplitted) {
+        // this.addressFile = addressFile; // essa é a versao correta
 
-    public void runSimulation(Cache cache) {
-        this.bsize = cache.getBsize();
-        this.minData = bsize / 4;
+        this.addressFile = null; // como eu n tenho um arquivo de teste pronto, vamo com isso
 
-        // E aqui eu gerencio
-        writeBinFile(); //a partir daqui eu tenho data.bin e address.bin
+        this.isSplitted = isSplitted;
+        dataFile = "data.bin";
 
-        // Ler um endereço e tenta fazer um acesso na cache.
+        this.dataCache_bsize = 4;
+        this.dataCache_minData = dataCache_bsize/4;
+        this.instrCache_bsize = 4;
+        this.instrCache_minData = instrCache_bsize/4;
 
-        try (DataInputStream fp = new DataInputStream(new FileInputStream("address.bin"))) {
+        this.n = 10000;          //altera quantos blocos de memória vão ser criados (no data.bin)
+    }
+
+    public void runSimulation(Cache dataCache, Cache instrCache) {
+        
+        if (isSplitted) {
+            this.dataCache_bsize = dataCache.getBsize();
+            this.instrCache_minData = dataCache_bsize / 4;
+
+            this.instrCache_bsize = instrCache.getBsize();
+            this.instrCache_minData = instrCache_bsize / 4;
+
+            writeDataFile(); //a partir daqui eu tenho data.bin e o address.bin (se não foi identificado antes)
             
-            // ele entra aqui
-            // System.out.println("entro aqui?");
+            // Vou considerar que o padrão é
+                //byte endereço
+                // 0 = dado, 1 = instrução
+
+            try (DataInputStream fp = new DataInputStream(new FileInputStream(addressFile))) {
+                
+                // Lê todos os endereços no arquivo e faz as buscas na cache
+                while (true) {
+                    try {
+                        byte type = fp.readByte();
+                        int address = fp.readInt();
 
 
+                        //Endereço de dado
+                        if (type == 0) {
+                            int x = dataCache.search(address);
 
-            // Lê todos os endereços no arquivo e faz as buscas na cache
-            while (true) {
-                try {
-                    int address = fp.readInt();
-                    int x = cache.search(address);
-                    
-                    // Cache retorna -1 em caso de miss
-                    if (x != -1) {
-                        // System.out.println("Hit! '" + x + "' encontrado!");
-                    } else {
-                        // System.out.println("Miss! Inserindo bloco na cache...");
-                        
-                        // Acessamos o arquivo de dados no modo aleatório pra poder acessar qualquer parte
-                        try (RandomAccessFile raf = new RandomAccessFile(FILE_NAME, "r")) {
-                            //como é um inteiro, vai truncar a parte decimal, arredondando pra baixo, como eu disse antes
-                            int blockNumber = address / bsize; 
-                            int blockAddress = blockNumber * bsize; //endereço do bloco no arquivo em byte
+                            if (x != -1) {
+                                System.out.println("(data cache) Hit: Dado " + x);
+                            } else {
+                                try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
+                                    
+                                    //como é um inteiro, vai truncar a parte decimal, arredondando pra baixo, como eu disse antes
+                                    int blockNumber = address / dataCache_bsize; 
+                                    int blockAddress = blockNumber * dataCache_bsize; //endereço do bloco no arquivo em byte
 
-                            raf.seek(blockAddress); //move o ponteiro até o byte do bloco
-                            
-                            byte[] block = new byte[bsize]; // cria o bloco
+                                    raf.seek(blockAddress); //move o ponteiro até o byte do bloco
+                                    
+                                    byte[] block = new byte[dataCache_bsize]; // cria o bloco
 
-                            //read fully lê byte a byte até encher o vetor
-                            raf.readFully(block);   //pega todos os dados do arquivo e bota no bloco
-                            cache.insert(address, block);
+                                    //read fully lê byte a byte até encher o vetor
+                                    raf.readFully(block);   //pega todos os dados do arquivo e bota no bloco
+                                    dataCache.insert(address, block);
 
-                        } catch (FileNotFoundException e) {
-                            System.err.println("X -> Arquivo de endereços não encontrado: " + e.getMessage());
-                        } catch (IOException e) {
-                            System.err.println("X -> Erro de I/O ao abrir address.bin: " + e.getMessage());
+                                 } catch (FileNotFoundException e) {
+                                    System.err.println("X -> Arquivo de dados não encontrado: " + e.getMessage());
+                                 } catch (IOException e) {
+                                    System.err.println("X -> Erro de I/O ao abrir address.bin: " + e.getMessage());
+                                }
+                            }
+
+                        //Endereço de instrução
+                        } else if (type == 1) {
+                            int x = instrCache.search(address);
+
+                            if (x != -1) {
+                                System.out.println("(instr cache) Hit! Dado: " + x);
+                            } else {
+                                try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
+                                    
+                                    //como é um inteiro, vai truncar a parte decimal, arredondando pra baixo, como eu disse antes
+                                    int blockNumber = address / instrCache_bsize; 
+                                    int blockAddress = blockNumber * instrCache_bsize; //endereço do bloco no arquivo em byte
+
+                                    raf.seek(blockAddress); //move o ponteiro até o byte do bloco
+                                    
+                                    byte[] block = new byte[instrCache_bsize]; // cria o bloco
+
+                                    //read fully lê byte a byte até encher o vetor
+                                    raf.readFully(block);   //pega todos os dados do arquivo e bota no bloco
+                                    instrCache.insert(address, block);
+
+                                 } catch (FileNotFoundException e) {
+                                    System.err.println("X -> Arquivo de dados não encontrado: " + e.getMessage());
+                                 } catch (IOException e) {
+                                    System.err.println("X -> Erro de I/O ao abrir address.bin: " + e.getMessage());
+                                }
+                            }
                         }
+                    } catch (EOFException e) {
+                        break; //fim do arquivo de endereço
                     }
-                } catch (EOFException e) {
-                    break; //fim do arquivo de endereço
                 }
+            } catch (FileNotFoundException e) {
+                System.err.println("X -> Arquivo de endereços não encontrado: " + e.getMessage());
+            } catch (IOException e) {
+                System.err.println("X - > Erro ao ler arquivo de endereços: " + e.getMessage());
             }
 
-        } catch (FileNotFoundException e) {
-            System.err.println("X -> Arquivo de endereços não encontrado: " + e.getMessage());
-        } catch (IOException e) {
-            System.err.println("X - > Erro ao ler arquivo de endereços: " + e.getMessage());
+            dataCache.printLog();
+            instrCache.printLog();
+
+        // Caso seja um cache normal
+        } else {
+            this.dataCache_bsize = dataCache.getBsize();
+            this.dataCache_minData = dataCache_bsize / 4;
+
+            // E aqui eu gerencio
+            writeDataFile(); //a partir daqui eu tenho data.bin e address.bin
+
+            // Ler um endereço e tenta fazer um acesso na cache.
+            try (DataInputStream fp = new DataInputStream(new FileInputStream(addressFile))) {
+                // Lê todos os endereços no arquivo e faz as buscas na cache
+                while (true) {
+                    try {
+                        byte type = fp.readByte();
+                        int address = fp.readInt();
+
+                        //Como aqui é sempre de dado, se for um endereço de instrução, só descarta
+                        if (type == 0) {
+                            int x = dataCache.search(address);
+                        
+                            // Cache retorna -1 em caso de miss
+                            if (x != -1) {
+                                // System.out.println("Hit! '" + x + "' encontrado!");
+                            } else {
+                                // System.out.println("Miss! Inserindo bloco na cache...");
+                                
+                                // Acessamos o arquivo de dados no modo aleatório pra poder acessar qualquer parte
+                                try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
+                                    //como é um inteiro, vai truncar a parte decimal, arredondando pra baixo, como eu disse antes
+                                    int blockNumber = address / dataCache_bsize; 
+                                    int blockAddress = blockNumber * dataCache_bsize; //endereço do bloco no arquivo em byte
+
+                                    raf.seek(blockAddress); //move o ponteiro até o byte do bloco
+                                    
+                                    byte[] block = new byte[dataCache_bsize]; // cria o bloco
+
+                                    //read fully lê byte a byte até encher o vetor
+                                    raf.readFully(block);   //pega todos os dados do arquivo e bota no bloco
+                                    dataCache.insert(address, block);
+
+                                } catch (FileNotFoundException e) {
+                                    System.err.println("X -> Arquivo de dados não encontrado: " + e.getMessage());
+                                } catch (IOException e) {
+                                    System.err.println("X -> Erro de I/O ao abrir address.bin: " + e.getMessage());
+                                }
+                            }
+                        }
+    
+                    } catch (EOFException e) {
+                        break; //fim do arquivo de endereço
+                    }
+                }
+
+            } catch (FileNotFoundException e) {
+                System.err.println("X -> Arquivo de endereços não encontrado: " + e.getMessage());
+            } catch (IOException e) {
+                System.err.println("X - > Erro ao ler arquivo de endereços: " + e.getMessage());
+            }
+
+            dataCache.printLog();
         }
-
-        cache.printLog();
-
+        
     }
 
 
@@ -96,12 +212,15 @@ public class FileManager {
     * Cria o arquivo de dados com pelo menos 1 bloco completo. Então se bsize = 4, 1 inteiro por bloco.
     * to considerando que só vai ter inteiros no campo de dado, ent o tamanho da palavra é sempre 4 bytes.
     * Como a cache já foi criada antes de criarmos o arquivo, bsize teoricamente é uma potência de 2 e >= 4.
+    * 
+    * Se eu tiver saco, eu separo os arquivos de dados entre instruções e dados depois
+    * 
     */
-    private File writeBinFile() {
-        System.out.println("Escrevendo arquivo binário...");
+    private File writeDataFile() {
+        System.out.println("Escrevendo arquivo de dados binário...");
 
         // Procura o endereço do arquivo 
-        File file = new File(FILE_NAME);
+        File file = new File(dataFile);
 
         // Só pra garantir
         if(!file.exists()) {
@@ -114,7 +233,7 @@ public class FileManager {
         try (DataOutputStream fp = new DataOutputStream(new FileOutputStream(file))) {
             // Random rand = new Random(); //cria um gerador de números aleatórios
 
-            for(int i = 0; i < (this.n*minData); i++) {
+            for(int i = 0; i < (this.n*dataCache_minData); i++) {
                 fp.writeInt(i); //escreve n blocos de inteiros sequenciais no arquivo (posso deixar aleatório dps)
             }
             System.out.println("Arquivo de teste criado com sucesso!");
@@ -123,9 +242,14 @@ public class FileManager {
         } catch (IOException e) {
             System.err.println("X - Falha ao escrever no arquivo! " + e.getMessage());
         }
-        writeAddressFile();
+
+        if(addressFile == null) {
+            writeAddressFile();
+            return file;
+        } else {
+            return file;
+        }
         
-        return file;
     }
 
     /*
@@ -134,29 +258,30 @@ public class FileManager {
     // ATENÇÃO: // Como eu também to emulando a cache de uma maneira simples, apenas com inteiros
                 // vou garantir que os endereços sejam sempre múltiplos de 4, por que assim o offset vai estar sempre alinhado
                 // e eu não vou ter um inteiro com um pedaço dos bytes num bloco e o resto em outro.
-            
-                // Para que um número seja múltiplico de 4 digitalmente, seus dois últimos bits devem ser 0
-                // Vou fazer no seguinte formato, o número gerado é sempre arredondado pro múltiplico de 4 mais abaixo dele.
-                // Exemplo: 21, 22 e 23 são arredondados pra 20. Ambos vão representar o mesmo endereço.
     */
     private void writeAddressFile() {
         Random rand = new Random(); //gerador de números aleatórios
 
         //total de inteiros no data.bin
-        int totalWords = this.n * (bsize / 4);
+        int totalWords = this.n * (dataCache_bsize / 4);
         
         // Garante um número mínimo ou grande de acessos
         // int numAddresses = Math.max(10, totalWords * 2); //Math.max escolhe o maior entre eles
         int numAddresses = Math.max(10, totalWords);
 
         try (DataOutputStream fp = new DataOutputStream(new FileOutputStream("address.bin"))) {
+            
             for (int i = 0; i < numAddresses; i++) {
                 //gera um inteiro aleatório entre 0 e o máximo de inteiros do arquivo
                 int wordIndex = (rand.nextInt(totalWords));  //ou seja, escolhe algum dos inteiros do arquivo. Como um índice
                 
                 // EX: wordIndex = 1, representa a palavra no byte 4 do arquivo.
                 int wordAddress = wordIndex * 4;             //converte pra formato bináriio
-                fp.writeInt(wordAddress);                   //escreve o número no arquivo
+
+                // Em tese, é só colocar um byte 0 ou 1 aqui pra ver se é instrução ou dado.
+                //vou escrever 0(dado) se for par e 1(instr) se for impar, simples por enquanto
+                fp.writeByte(i%2);  
+                fp.writeInt(wordAddress);                    //escreve o número no arquivo
             }
         } catch (IOException e) {
             System.err.println("X - Falha ao escrever arquivo de endereços! " + e.getMessage());;
@@ -164,6 +289,7 @@ public class FileManager {
 
         System.out.println("Arquivo de endereços criado com sucesso!");
         System.out.println();
+        this.addressFile = "address.bin";
     }
     //     System.out.println(" [Lido] Endereço: " + Integer.toUnsignedString(address) + " | Tipo: " + typeStr + " | Dado: " + data);
     // }
