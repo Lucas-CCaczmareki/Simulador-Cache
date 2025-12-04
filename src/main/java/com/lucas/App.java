@@ -21,7 +21,7 @@ public class App
         boolean isSplitted;
         Scanner terminal = new Scanner(System.in); //lê inputs do terminal
         
-        System.out.println("Config: ");
+        System.out.println("Config: <nome> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>");
         String in = terminal.nextLine(); // Lê a linha inteira digitada
         terminal.close();
 
@@ -45,19 +45,20 @@ public class App
             String[] configDataCache  = partes[1].split(":");
             String[] configInstrCache = partes[3].split(":");
 
+            // padrão correto: <nsets>:<bsize>:<assoc>
             // Converte as strings para inteiros
             int data_nsets  = Integer.parseInt(configDataCache[0]),
-                data_assoc  = Integer.parseInt(configDataCache[1]),
-                data_bsize  = Integer.parseInt(configDataCache[2]),
+                data_bsize  = Integer.parseInt(configDataCache[1]),
+                data_assoc  = Integer.parseInt(configDataCache[2]),
                 instr_nsets = Integer.parseInt(configInstrCache[0]),
-                instr_assoc = Integer.parseInt(configInstrCache[1]),
-                instr_bsize = Integer.parseInt(configInstrCache[2]);
+                instr_bsize = Integer.parseInt(configInstrCache[1]),
+                instr_assoc = Integer.parseInt(configInstrCache[2]);
 
             FileManager fp = new FileManager(filename, isSplitted);
             
             // Cria a cache de dados
-            Cache dL1 = new Cache(nameDataCache, data_nsets, data_assoc, data_bsize);
-            Cache iL1 = new Cache(nameInstrCache, instr_nsets, instr_assoc, instr_bsize);
+            Cache dL1 = new Cache(nameDataCache, data_nsets, data_bsize, data_assoc);
+            Cache iL1 = new Cache(nameInstrCache, instr_nsets, instr_bsize, instr_assoc);
 
             fp.runSimulation(dL1, iL1);
 
@@ -68,16 +69,16 @@ public class App
                    filename  = partes[2];
 
             String[] config = partes[1].split(":"); //divide a string nos :
-            // config[0] = nsets, config[1] = assoc, config[2] = bsize
 
+            // padrão correto: <nsets>:<bsize>:<assoc>
             int nsets = Integer.parseInt(config[0]),
-                assoc = Integer.parseInt(config[1]),
-                bsize = Integer.parseInt(config[2]);
+                bsize = Integer.parseInt(config[1]),
+                assoc = Integer.parseInt(config[2]);
 
 
             // Cria a cache antes de criar o arquivo 
             FileManager fp = new FileManager(filename, isSplitted);
-            Cache dL1 = new Cache(nameCache, nsets, assoc, bsize);
+            Cache dL1 = new Cache(nameCache, nsets, bsize, assoc);
             fp.runSimulation(dL1, null);
         }
         

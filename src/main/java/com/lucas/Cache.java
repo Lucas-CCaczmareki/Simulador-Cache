@@ -97,7 +97,7 @@ public class Cache {
     }
 
     // Construtor configurável
-    public Cache(String name, int nsets, int assoc, int bsize) {
+    public Cache(String name, int nsets, int bsize, int assoc) {
         this.name = name;
         
         // Mapeamento direto, bsize = 4, 1024 conjuntos
