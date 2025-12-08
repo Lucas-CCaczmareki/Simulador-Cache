@@ -21,7 +21,7 @@ public class App
         boolean isSplitted;
         Scanner terminal = new Scanner(System.in); //lê inputs do terminal
         
-        System.out.println("Config: <nome> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>");
+        System.out.println("Config: <nome> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>\nSe você não tem um arquivo de entrada, entre com <null> e criaremos um.");
         String in = terminal.nextLine(); // Lê a linha inteira digitada
         terminal.close();
 
