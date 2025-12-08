@@ -76,6 +76,7 @@ public class App
                 assoc = Integer.parseInt(config[2]);
 
 
+            // System.out.println("Cheguei?");
             // Cria a cache antes de criar o arquivo 
             FileManager fp = new FileManager(filename, isSplitted);
             Cache dL1 = new Cache(nameCache, nsets, bsize, assoc);

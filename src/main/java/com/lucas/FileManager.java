@@ -31,8 +31,12 @@ public class FileManager {
 
     // //Construtor
     public FileManager(String addressFile, boolean isSplitted) {
-        this.addressFile = addressFile;
-        // this.addressFile = null; // será criado automaticamente se for null
+        
+        if (addressFile.equals("null")) { 
+            this.addressFile = null;
+        } else {
+            this.addressFile = addressFile;
+        }
 
         this.isSplitted = isSplitted;
         dataFile = "data.bin";
@@ -62,9 +66,8 @@ public class FileManager {
                 // Lê todos os endereços no arquivo e faz as buscas na cache
                 while (true) {
                     try {
-                        byte type = fp.readByte();
                         int address = fp.readInt();
-
+                        byte type = fp.readByte();                        
 
                         //Endereço de dado
                         if (type == 0) {
@@ -149,10 +152,10 @@ public class FileManager {
                 // Lê todos os endereços no arquivo e faz as buscas na cache
                 while (true) {
                     try {
+                        int address = fp.readInt();
                         // byte type = 
                         fp.readByte(); //só pra avançar o ponteiro
-                        int address = fp.readInt();
-
+                        
                         // A cache unificada deve tratar dados e instruções (se eu n to louco)
                         // to usando o nome de dataCache pra facilitar minha vida aqui
                         // já que se ela é unificada a instrCache = null e a dataCache = cache unificada
@@ -225,9 +228,10 @@ public class FileManager {
         try (DataInputStream fp = new DataInputStream(new FileInputStream(addressFile))) {
             while (true) {
                 try {
+                    int address = fp.readInt();
                     // byte type = 
                     fp.readByte(); // ignorado
-                    int address = fp.readInt();
+                    
                     if (address > maxAddress) maxAddress = address;
                 } catch (EOFException e) {
                     break;
@@ -296,8 +300,8 @@ public class FileManager {
 
                 // Em tese, é só colocar um byte 0 ou 1 aqui pra ver se é instrução ou dado.
                 //vou escrever 0(dado) se for par e 1(instr) se for impar, simples por enquanto
-                fp.writeByte(i%2);  
                 fp.writeInt(wordAddress);                    //escreve o número no arquivo
+                fp.writeByte(i%2);  
             }
         } catch (IOException e) {
             System.err.println("X - Falha ao escrever arquivo de endereços! " + e.getMessage());;
