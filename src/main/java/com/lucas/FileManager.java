@@ -74,7 +74,7 @@ public class FileManager {
                             int data = dataCache.search(address);
 
                             if (data != -1) {
-                                // System.out.println("(data cache) Hit: Dado " + data);
+                                System.out.println("(data cache) Hit! Dado " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -102,7 +102,7 @@ public class FileManager {
                             int data = instrCache.search(address);
 
                             if (data != -1) {
-                                // System.out.println("(instr cache) Hit! Dado: " + data);
+                                System.out.println("(instr cache) Hit! Dado: " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -165,7 +165,7 @@ public class FileManager {
 
                         // Cache retorna -1 em caso de miss
                         if (data != -1) {
-                            // System.out.println("Hit! '" + data + "' encontrado!");
+                            System.out.println("Hit! '" + data + "' encontrado!");
                         } else {
                             // System.out.println("Miss! Inserindo bloco na cache...");
                             

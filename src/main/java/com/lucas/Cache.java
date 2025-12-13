@@ -187,9 +187,9 @@ public class Cache {
         int tag = address >>> (bitsOffset + bitsIndex);
 
         // === DEBUG TEMPORÁRIO ===
-        if (accesses < 20) { // Só imprime os 20 primeiros pra não travar o console
-            System.out.printf("Addr: %d \t| Tag: %d \t| Index: %d \t| Offset: %d\n", address, tag, index, offset);
-        }
+        // if (accesses < 20) { // Só imprime os 20 primeiros pra não travar o console
+        //     System.out.printf("Addr: %d \t| Tag: %d \t| Index: %d \t| Offset: %d\n", address, tag, index, offset);
+        // }
 
 
         /* Lógica antiga (falhava em casos de borda (totalmente associativa))
