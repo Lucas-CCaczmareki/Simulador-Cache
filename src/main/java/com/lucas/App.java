@@ -1,5 +1,8 @@
 package com.lucas;
 
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Scanner;
 
 /*
@@ -18,6 +21,29 @@ public class App
         // Ok, então se eu só inserir 1 é uma cache pra dados e instrução, se eu inserir duas, é splitted entre dados e instrução
         // A moral é que eu vou ter que pegar essa string de entrada e dividir...
         
+        //create test bin
+        // try (DataOutputStream fp = new DataOutputStream(new FileOutputStream("test.bin"))) {
+        //     fp.writeInt(100);
+        //     fp.writeInt(0);
+        //     fp.writeInt(101);
+        //     fp.writeInt(0);
+        //     fp.writeInt(132);
+        //     fp.writeInt(0);
+        //     fp.writeInt(133);
+        //     fp.writeInt(0);
+        //     fp.writeInt(164);
+        //     fp.writeInt(0);
+        //     fp.writeInt(165);
+        //     fp.writeInt(0);
+        //     // fp.writeInt(106);
+        //     // fp.writeInt(0);
+
+        // } catch (IOException e) {
+        //     System.err.println("X - Falha ao escrever arquivo de endereços! " + e.getMessage());;
+        // }
+
+
+
         boolean isSplitted;
         Scanner terminal = new Scanner(System.in); //lê inputs do terminal
         

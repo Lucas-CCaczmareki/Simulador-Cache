@@ -186,6 +186,12 @@ public class Cache {
         // tag (restante dos bits à esquerda)
         int tag = address >>> (bitsOffset + bitsIndex);
 
+        // === DEBUG TEMPORÁRIO ===
+        if (accesses < 20) { // Só imprime os 20 primeiros pra não travar o console
+            System.out.printf("Addr: %d \t| Tag: %d \t| Index: %d \t| Offset: %d\n", address, tag, index, offset);
+        }
+
+
         /* Lógica antiga (falhava em casos de borda (totalmente associativa))
         // // Num caso de borda onde bitsOffset = 0 esse código pode dar problema
         // // Separando os bits do offset
@@ -220,11 +226,15 @@ public class Cache {
                 if(cache[index][0].tag == tag) { // se a tag é igual, temos um hit
                     hits++;
                     
+                    // Como eu decidi fazer isso emular o resgate, eu vou precisar alinhas o offset
+                    // então endereços do tipo 100 - 101 - 102 e 103 são mapeados sempre como se fosse o 100. E assim por diante
+                    int offsetAlinhado = offset & ~3;   //corta os ultimos bits e transforma em multiplo de 4.
+
                     // Ambos arquivo e buffer operam de big endian. Então isso não deve corromper
                     // Aqui esse buffer vai ler os 4 bytes consecutivos começando no offset e montar meu inteiro
                     // é a mesma coisa que fazer na mão, mas assim é mais simples e confunde menos.
                     ByteBuffer bb = ByteBuffer.wrap(cache[index][0].data);
-                    return bb.getInt(offset);
+                    return bb.getInt(offsetAlinhado);
                 
                 // Caso onde a validade tá ok, mas o dado não é oq a gente procura (tag diferente)
                 } else {
@@ -243,9 +253,15 @@ public class Cache {
                     // Compara pra ver se a tag bate
                     if(cache[index][i].tag == tag) {
                         hits++;
+
+                        // Como eu decidi fazer isso emular o resgate, eu vou precisar alinhas o offset
+                        // então endereços do tipo 100 - 101 - 102 e 103 são mapeados sempre como se fosse o 100. E assim por diante
+                        int offsetAlinhado = offset & ~3;   //corta os ultimos bits e transforma em multiplo de 4.  
+
+
                         // Se bateu, monta o inteiro e retorna
                         ByteBuffer bb = ByteBuffer.wrap(cache[index][i].data);
-                        return bb.getInt(offset);
+                        return bb.getInt(offsetAlinhado);
                     }
                 } else {
                     compulsoryMiss++;

@@ -67,14 +67,14 @@ public class FileManager {
                 while (true) {
                     try {
                         int address = fp.readInt();
-                        byte type = fp.readByte();                        
+                        int type = fp.readInt();                        
 
                         //Endereço de dado
                         if (type == 0) {
                             int data = dataCache.search(address);
 
                             if (data != -1) {
-                                System.out.println("(data cache) Hit: Dado " + data);
+                                // System.out.println("(data cache) Hit: Dado " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -102,7 +102,7 @@ public class FileManager {
                             int data = instrCache.search(address);
 
                             if (data != -1) {
-                                System.out.println("(instr cache) Hit! Dado: " + data);
+                                // System.out.println("(instr cache) Hit! Dado: " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -154,7 +154,7 @@ public class FileManager {
                     try {
                         int address = fp.readInt();
                         // byte type = 
-                        fp.readByte(); //só pra avançar o ponteiro
+                        fp.readInt(); //só pra avançar o ponteiro
                         
                         // A cache unificada deve tratar dados e instruções (se eu n to louco)
                         // to usando o nome de dataCache pra facilitar minha vida aqui
@@ -165,7 +165,7 @@ public class FileManager {
 
                         // Cache retorna -1 em caso de miss
                         if (data != -1) {
-                            System.out.println("Hit! '" + data + "' encontrado!");
+                            // System.out.println("Hit! '" + data + "' encontrado!");
                         } else {
                             // System.out.println("Miss! Inserindo bloco na cache...");
                             
@@ -230,7 +230,7 @@ public class FileManager {
                 try {
                     int address = fp.readInt();
                     // byte type = 
-                    fp.readByte(); // ignorado
+                    fp.readInt(); // ignorado
                     
                     if (address > maxAddress) maxAddress = address;
                 } catch (EOFException e) {
@@ -301,7 +301,7 @@ public class FileManager {
                 // Em tese, é só colocar um byte 0 ou 1 aqui pra ver se é instrução ou dado.
                 //vou escrever 0(dado) se for par e 1(instr) se for impar, simples por enquanto
                 fp.writeInt(wordAddress);                    //escreve o número no arquivo
-                fp.writeByte(i%2);  
+                fp.writeInt(i%2);  
             }
         } catch (IOException e) {
             System.err.println("X - Falha ao escrever arquivo de endereços! " + e.getMessage());;
