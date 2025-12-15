@@ -226,6 +226,10 @@ public class Cache {
                 if(cache[index][0].tag == tag) { // se a tag é igual, temos um hit
                     hits++;
                     
+                    // ==================================================================================
+                    // PS: ESSE ALINHAMENTO SÓ EXISTE POR CAUSA DO RESGATE DE DADOS (QUE EU FIZ DE BOBÃO)
+                    // ==================================================================================
+
                     // Como eu decidi fazer isso emular o resgate, eu vou precisar alinhas o offset
                     // então endereços do tipo 100 - 101 - 102 e 103 são mapeados sempre como se fosse o 100. E assim por diante
                     int offsetAlinhado = offset & ~3;   //corta os ultimos bits e transforma em multiplo de 4.
@@ -302,17 +306,20 @@ public class Cache {
         
         // Se tiver associatividade
         } else {
-            // Procura o primeiro bloco livre naquele conjunto
-            for (int i = 0; i < assoc; i++) {
-                if(!cache[index][i].flag) { //bloco livre
-                    // Carrega o bloco pra lá
-                    cache[index][i].flag = true;
-                    cache[index][i].tag = tag;
-                    cache[index][i].data = block;
-                    return;
-                }
-            }
-            // SE não tiver nenhum, escolhe 1 aleatoriamente e substitui
+            // Tirando essa parte, como foi pedido.
+            // // Procura o primeiro bloco livre naquele conjunto
+            // for (int i = 0; i < assoc; i++) {
+            //     if(!cache[index][i].flag) { //bloco livre
+
+            //         // Carrega o bloco pra lá
+            //         cache[index][i].flag = true;
+            //         cache[index][i].tag = tag;
+            //         cache[index][i].data = block;
+            //         return;
+            //     }
+            // }
+    
+            // Escolhe aleatoriamente e substitui.
             Random rand = new Random();
             int target = rand.nextInt(assoc); // escolhe um número aleatório entre 0 e assoc (que é = número de blocos)
 

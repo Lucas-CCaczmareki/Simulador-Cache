@@ -3,6 +3,7 @@ package com.lucas;
 // import java.io.DataOutputStream;
 // import java.io.FileOutputStream;
 // import java.io.IOException;
+
 import java.util.Scanner;
 
 /*
@@ -47,7 +48,9 @@ public class App
         boolean isSplitted;
         Scanner terminal = new Scanner(System.in); //lê inputs do terminal
         
-        System.out.println("Config: <nome> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>\nSe você não tem um arquivo de entrada, entre com <null> e criaremos um.");
+        System.out.println("=====================================================================================================");
+        System.out.println("Config unified: <nome> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>\nConfig splitted: <nome1> <nsets>:<bsize>:<assoc> <nome2> <nsets>:<bsize>:<assoc> <arquivo_de_entrada>\nSe você não tem um arquivo de entrada, entre com <null> e criaremos um.");
+        System.out.println("=====================================================================================================");
         String in = terminal.nextLine(); // Lê a linha inteira digitada
         terminal.close();
 

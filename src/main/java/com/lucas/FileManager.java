@@ -74,7 +74,7 @@ public class FileManager {
                             int data = dataCache.search(address);
 
                             if (data != -1) {
-                                System.out.println("(data cache) Hit! Dado " + data);
+                                // System.out.println("(data cache) Hit! Dado " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -102,7 +102,7 @@ public class FileManager {
                             int data = instrCache.search(address);
 
                             if (data != -1) {
-                                System.out.println("(instr cache) Hit! Dado: " + data);
+                                // System.out.println("(instr cache) Hit! Dado: " + data);
                             } else {
                                 try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
                                     
@@ -165,7 +165,7 @@ public class FileManager {
 
                         // Cache retorna -1 em caso de miss
                         if (data != -1) {
-                            System.out.println("Hit! '" + data + "' encontrado!");
+                            // System.out.println("Hit! '" + data + "' encontrado!");
                         } else {
                             // System.out.println("Miss! Inserindo bloco na cache...");
                             
@@ -205,6 +205,16 @@ public class FileManager {
         }
         
     }
+
+
+    /*
+    
+    AQUI TEM UM ERRO. Em arquivos de teste muito grandes, e que tem vários misses. Se eu n printo nada, o computador acessa várias vezes o miss
+    muito rápido e o windows possivelmente identifica como algo malicioso e impede o acesso ao arquivo. Não influencia na simulação, só na 
+    emulação da memória. Por enquanto eu arrumei colocando uns prints, mas o certo seria mudar o jeito que eu acesso a memória. 
+    Carregar tudo 1x só pra RAM ou algo do tipo
+    
+    */
 
 
     /*
